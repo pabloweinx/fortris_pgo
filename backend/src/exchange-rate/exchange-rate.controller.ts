@@ -1,9 +1,15 @@
 import { Controller, Get } from '@nestjs/common';
+import { ExchangeRateService } from './exchange-rate.service';
 
 @Controller('exchange-rate')
 export class ExchangeRateController {
+
+    constructor(
+        private exchangeRateService: ExchangeRateService
+    ) { }
+
     @Get()
     getExchangeRate(): number {
-        return Math.floor(Math.random() * (12000 - 5000 + 1) + 5000);
+        return this.exchangeRateService.calculateNewExchangeRate();
     }
 }

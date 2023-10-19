@@ -35,8 +35,8 @@ export class AccountsListPageComponent implements OnInit {
       balance_btc: account.balance,
       available_balance_btc: account.available_balance,
       // We don't need to store in the db the values calculated in dollars
-      balance_dollar: 235325,
-      available_balance_dollar: 134324
+      balance_dollar: account.balance * rate,
+      available_balance_dollar: account.available_balance * rate
     };
   }
 }

@@ -15,6 +15,7 @@ async function seed() {
   const accountRepository = connection.getMongoRepository(Account);
 
   // Datos de ejemplo
+  // @TODO: random BTC between 0 and, e.g. 40, with decimals and no truncation neither round
   const accounts = [
     { balance: 100, available_balance: 95, currency: 'BTC' },
     { balance: 200, available_balance: 190, currency: 'BTC' },

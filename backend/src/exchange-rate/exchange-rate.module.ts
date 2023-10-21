@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ExchangeRateController } from './exchange-rate.controller';
 import { ExchangeRateService } from './exchange-rate.service';
-import { ExchangeRateGateway } from './exchange-rate.gateway';
+import { WebsocketGateway } from 'src/gateways/websocket.gateway';
+import { AccountsModule } from 'src/accounts/accounts.module';
 
 @Module({
+    imports: [AccountsModule],
     providers: [
         ExchangeRateService,
-        ExchangeRateGateway
+        WebsocketGateway
     ],
     controllers: [ExchangeRateController],
 })

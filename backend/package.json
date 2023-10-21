@@ -26,6 +26,7 @@
     "@nestjs/platform-socket.io": "^10.2.7",
     "@nestjs/typeorm": "^10.0.0",
     "@nestjs/websockets": "^10.2.7",
+    "cors": "^2.8.5",
     "lodash": "^4.17.21",
     "mongodb": "^6.1.0",
     "reflect-metadata": "^0.1.13",

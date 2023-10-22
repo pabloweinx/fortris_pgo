@@ -1,3 +1,61 @@
 <div *ngIf="(accounts$ | async) as accounts">
-    {{ accounts | json }}
+
+  <!-- Top bar -->
+  <mat-toolbar color="primary">
+    <span>📊 Accounts</span>
+    <span class="spacer"></span>
+    <span>${{ exchangeRateUpdate$ | async | number:'1.2-2'}}</span>
+  </mat-toolbar>
+
+  <!-- Table -->
+  <mat-table [dataSource]="accounts">
+
+    <!-- Definition of columns -->
+    <ng-container matColumnDef="account_name">
+      <mat-header-cell *matHeaderCellDef> Account name </mat-header-cell>
+      <mat-cell *matCellDef="let account"> {{account.account_name}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="category">
+      <mat-header-cell *matHeaderCellDef> Category </mat-header-cell>
+      <mat-cell *matCellDef="let account"> {{account.category}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="tags">
+      <mat-header-cell *matHeaderCellDef> Tags </mat-header-cell>
+      <mat-cell *matCellDef="let account"> {{account.tags}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="balance">
+      <mat-header-cell *matHeaderCellDef> Balance </mat-header-cell>
+      <mat-cell *matCellDef="let account">
+        {{account.balance}} BTC<br>${{account.balance_dollar | number:'1.2-2'}}
+      </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="available_balance">
+      <mat-header-cell *matHeaderCellDef> Available balance </mat-header-cell>
+      <mat-cell *matCellDef="let account">
+        {{account.avaiable_balance}} BTC<br>${{account.available_balance_dollar | number:'1.2-2'}}
+      </mat-cell>
+    </ng-container>
+
+    <!-- Header and ranks of the table -->
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"
+      (click)="navigateToAccountDetail(row)"
+      [ngClass]="{'flash-increase': row.state === 1, 'flash-decrease': row.state === 2}"
+      (animationend)="onAnimationEnd($event, row)">
+    </mat-row>
+  </mat-table>
+
+  <ul>
+    <li *ngFor="let account of accounts">
+      <a [routerLink]="['/accounts', account._id]">
+        {{ account | json }}
+      </a>
+
+    </li>
+  </ul>
+
 </div>

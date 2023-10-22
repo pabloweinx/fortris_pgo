@@ -1,8 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Observable, combineLatest, combineLatestWith, filter, forkJoin, map, switchMap, tap } from 'rxjs';
-import { Account } from 'src/app/interfaces/account';
+import { MatTableDataSource } from '@angular/material/table';
+import { Router } from '@angular/router';
+import { Observable, filter, map, switchMap, tap } from 'rxjs';
+import { Account } from 'src/app/interfaces/account.interface';
+import { AccountService } from 'src/app/services/account.service';
 import { ApiService } from 'src/app/services/api.service';
-import { SocketService } from 'src/app/services/socket.service';
+import { ExchangeRateService } from 'src/app/services/exchange-rate.service';
+import { ReactiveService } from 'src/app/services/reactive.service';
 
 @Component({
   selector: 'app-accounts-list-page',
@@ -11,42 +15,29 @@ import { SocketService } from 'src/app/services/socket.service';
 })
 export class AccountsListPageComponent implements OnInit, OnDestroy {
 
-  accounts$!: Observable<Account[]>;
-  accountsData$: Observable<Account[]> = this.socketService.accountsData$;
-  accountBalanceUpdate$: Observable<Account[]> = this.socketService.accountBalanceUpdate$;
-  exchangeRateUpdate$: Observable<number> = this.socketService.exchangeRateUpdate$;
+  accounts$: Observable<Account[]> = this.accountService.accounts$;
+  exchangeRateUpdate$: Observable<number> = this.exchangeRateService.exchangeRateUpdate$;
+  displayedColumns: string[] = ['account_name', 'category', 'tags', 'balance', 'available_balance'];
 
   constructor(
     private apiService: ApiService,
-    private socketService: SocketService
+    private accountService: AccountService,
+    private exchangeRateService: ExchangeRateService,
+    private reactiveService: ReactiveService,
+    private router: Router
   ) {
 
   }
   ngOnInit(): void {
+    this.reactiveService.initReactivity();
 
     // We'll store the db accounts to work with them when receiving socket updates
     this.setInitialData();
 
     // Preventing this observable to participate in the combineLatest op till it has a valid value (e. g, the one obtained in the setInitialData())
-    this.exchangeRateUpdate$.pipe(
+    this.exchangeRateService.exchangeRateUpdate$.pipe(
       filter(rate => rate !== 0)
     )
-
-    this.accounts$ = combineLatest([this.accountsData$, this.accountBalanceUpdate$, this.exchangeRateUpdate$]).pipe(
-      map(([accountsData, accountBalanceUpdate, exchangeRateUpdate]) => {
-        // First, we apply the Exchange Rate to the accounts
-        const accountsWithUpdatedExchangeRate = accountsData.map((account: Account) => {
-          const updatedBalance = account.balance * exchangeRateUpdate;
-          return { ...account, balance: updatedBalance };
-        });
-
-        // Then, we apply balance update and recalculate everything
-        return accountsWithUpdatedExchangeRate.map((account: Account) => {
-          const update = accountBalanceUpdate.find(updatedAccount => updatedAccount._id === account._id);
-          return update ? this.transformAccount({ ...account, ...update }, exchangeRateUpdate) : account;
-        });        
-      })
-    );
   }
 
   /**
@@ -56,32 +47,30 @@ export class AccountsListPageComponent implements OnInit, OnDestroy {
    */
   setInitialData() {
     this.apiService.getExchangeRate().pipe(
-      tap(rate => this.socketService.setInitialExchangeRate(rate)),
+      tap(rate => this.exchangeRateService.setInitialExchangeRate(rate)),
       switchMap(
         rate => this.apiService.getAccounts().pipe(
           map((accounts: any) =>
-            accounts.map((account: Account) => this.transformAccount(account, rate)
+            accounts.map((account: Account) => this.accountService.transformAccount(account, rate)
             )
           )
         )
       )
     ).subscribe(accounts => {
-      this.socketService.setInitialAccounts(accounts);
+      this.accountService.setInitialAccounts(accounts);
     });
   }
 
-  transformAccount(account: Account, rate: number) {
-    return {
-      ...account,
-      balance_btc: account.balance,
-      available_balance_btc: account.available_balance,
-      // We don't need to store in the db the values calculated in dollars
-      balance_dollar: account.balance * rate,
-      available_balance_dollar: account.available_balance * rate
-    };
+  onAnimationEnd(event: AnimationEvent, account: Account) {
+    this.accountService.resetStates();
   }
 
+  navigateToAccountDetail(account: Account) {
+    this.router.navigate(['accounts', account._id]);
+  }
+
+
   ngOnDestroy(): void {
-    this.socketService.disconnect();
+    this.reactiveService.disconnect();
   }
 }

@@ -1,0 +1,20 @@
+// These animations apply on the account rows background
+@keyframes flashGreen {
+    0%   { background-color: transparent; }
+    50%  { background-color: #aaffaa; }
+    100% { background-color: transparent; }
+  }
+  
+  @keyframes flashRed {
+    0%   { background-color: transparent; }
+    50%  { background-color: #ffaaaa; }
+    100% { background-color: transparent; }
+  }
+
+.flash-increase {
+  animation: flashGreen 2s;
+}
+
+.flash-decrease {
+  animation: flashRed 2s;
+}

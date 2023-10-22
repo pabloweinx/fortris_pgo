@@ -1,1 +1,61 @@
-<p>account-details-page works!</p>
+<div *ngIf="selectedAccount$ | async as account">
+  <mat-toolbar color="primary">
+    <mat-toolbar-row>
+      <span>Account detail</span>
+    </mat-toolbar-row>
+  </mat-toolbar>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ account.account_name }}</mat-card-title>
+      <mat-card-subtitle>Treasury account</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <h2 [ngClass]="{'flash-increase': account?.state === 1, 'flash-decrease': account?.state === 2}">
+        {{ account.balance }} BTC (${{ account.balance_dollar | number:'1.2-2' }})
+      </h2>
+      <p [ngClass]="{'flash-increase': account?.state === 1, 'flash-decrease': account?.state === 2}">
+        Available balance:
+        {{ account.available_balance }} BTC (${{ account.available_balance_dollar  | number:'1.2-2' }})</p>
+    </mat-card-content>
+  </mat-card>
+
+  <ng-template *ngIf="account?.details">
+    Tengo detalles!
+    <mat-table [dataSource]="account.details">
+
+      <!-- Order Code Column -->
+      <ng-container matColumnDef="order_code">
+        <mat-header-cell *matHeaderCellDef> Order code </mat-header-cell>
+        <mat-cell *matCellDef="let detail"> {{ detail.order_code }} </mat-cell>
+      </ng-container>
+
+      <!-- Transaction Type Column -->
+      <ng-container matColumnDef="transaction_type">
+        <mat-header-cell *matHeaderCellDef> Transaction type </mat-header-cell>
+        <mat-cell *matCellDef="let detail"> {{ getTransactionType(detail.transaction_type) }} </mat-cell>
+      </ng-container>
+
+      <!-- Amount Column -->
+      <ng-container matColumnDef="amount">
+        <mat-header-cell *matHeaderCellDef> Amount </mat-header-cell>
+        <mat-cell *matCellDef="let detail"> {{ detail.amount }} BTC </mat-cell>
+      </ng-container>
+
+      <!-- Balance Column -->
+      <ng-container matColumnDef="balance">
+        <mat-header-cell *matHeaderCellDef> Balance </mat-header-cell>
+        <mat-cell *matCellDef="let detail"> {{ detail.balance }} BTC </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+
+    </mat-table>
+  </ng-template>
+    <div>Account name: {{ account.account_name }}</div>
+        <ul>
+          <li *ngFor="let details of account.details">
+              {{ details | json }}
+          </li>
+        </ul>
+</div>

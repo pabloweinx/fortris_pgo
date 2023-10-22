@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { SocketService } from './socket.service';
+import { ReactiveService } from './reactive.service';
 
 describe('SocketService', () => {
-  let service: SocketService;
+  let service: ReactiveService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(SocketService);
+    service = TestBed.inject(ReactiveService);
   });
 
   it('should be created', () => {

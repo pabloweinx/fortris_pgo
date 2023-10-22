@@ -1,3 +1,4 @@
+import { AccountDetails } from "./account-details.interface";
 import { BalanceChangeType } from "./balance-change-type.enum";
 
 export interface Account {
@@ -7,5 +8,8 @@ export interface Account {
     tag: string;
     balance: number;
     available_balance: number;
-    state?: BalanceChangeType
+    balance_dollar?: number;
+    available_balance_dollar?: number;
+    state?: BalanceChangeType;
+    details: AccountDetails[]
 }

@@ -1,10 +1,12 @@
-import { Optional } from '@nestjs/common';
 import { ObjectId } from 'mongodb';
 import { Entity, ObjectIdColumn, Column } from 'typeorm';
-import { BalanceChangeType } from './interfaces/balance-change-type.enum';
+import { BalanceChangeType } from '../interfaces/balance-change-type.enum';
+import { AccountDetail } from './account-details.entity';
+import { Exclude, Expose } from 'class-transformer';
 
 @Entity()
 export class Account {
+  @Expose()
   @ObjectIdColumn()
   _id: ObjectId;
 
@@ -23,6 +25,11 @@ export class Account {
   @Column()
   available_balance: number;
 
-  @Optional()
-  state: BalanceChangeType
+  @Exclude()
+  @Column(type => AccountDetail)
+  details: AccountDetail[];
+  
+  // Don't want to be stored in the db
+  state: BalanceChangeType;
+
 }

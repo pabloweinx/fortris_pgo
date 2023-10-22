@@ -2,17 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Account } from './account.entity';
-import { BalanceChangeType } from './interfaces/balance-change-type.enum';
+import { BalanceChangeType } from '../interfaces/balance-change-type.enum';
+import { BSON } from 'mongodb';
+import { AccountDetail } from './account-details.entity';
+import { classToPlain, instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class AccountsService {
   constructor(
     @InjectRepository(Account)
-    private accountsRepository: Repository<Account>,
+    private accountsRepository: Repository<Account>
   ) { }
 
-  async findAll(): Promise<Account[]> {
-    return this.accountsRepository.find();
+  async findAll(): Promise<any> {
+    return this.accountsRepository.find({});
+    //return instanceToPlain(accounts);
+  }
+
+  async getAccountWithDetails(id: string): Promise<Account> {
+    const _id = new BSON.ObjectId(id);
+    return this.accountsRepository.findOne({ where: { _id } });
   }
 
   async randomlyUpdateAccountBalance(): Promise<Account> {
@@ -23,7 +32,7 @@ export class AccountsService {
     }
 
     const randomAccountId = allAccountIds[Math.floor(Math.random() * allAccountIds.length)]._id;
-    const randomAccount = await this.accountsRepository.findOne({ where: {_id: randomAccountId}});
+    const randomAccount = await this.accountsRepository.findOne({ where: { _id: randomAccountId } });
 
     if (!randomAccount) {
       throw new Error(`You could not get the account with ID: ${randomAccountId}`);
@@ -54,5 +63,9 @@ export class AccountsService {
 
     console.debug(randomAccount);
     return randomAccount;
+  }
+
+  async save(account: Account): Promise<Account> {
+    return await this.accountsRepository.save(account);
   }
 }

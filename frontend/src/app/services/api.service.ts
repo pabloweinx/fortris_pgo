@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Account } from '../interfaces/account';
+import { Account } from '../interfaces/account.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -15,8 +15,8 @@ export class ApiService {
     return this.httpClient.get<Account[]>(environment.API_URL + '/accounts');
   }
 
-  getAccount(id: number) {
-    return this.httpClient.get(environment.API_URL + '/accounts/' + id);
+  getAccount(id: string) {
+    return this.httpClient.get<Account>(environment.API_URL + '/accounts/' + id);
   }
 
   getExchangeRate(): Observable<number | any>{

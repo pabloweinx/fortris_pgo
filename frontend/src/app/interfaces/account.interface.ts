@@ -2,7 +2,7 @@ import { AccountDetails } from "./account-details.interface";
 import { BalanceChangeType } from "./balance-change-type.enum";
 
 export interface Account {
-    _id: any, // @TODO: type this!
+    _id: string,
     account_name: string;
     category: string;
     tag: string;

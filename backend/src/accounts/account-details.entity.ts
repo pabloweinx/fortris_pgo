@@ -6,9 +6,6 @@ import {
 } from 'typeorm';
 
 export class AccountDetail {
-  @Expose()
-  @PrimaryGeneratedColumn('uuid')
-  _id: ObjectId;
 
   @Column('timestamp')
   confirmed_date: Date;

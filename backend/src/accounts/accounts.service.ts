@@ -4,8 +4,8 @@ import { Repository } from 'typeorm';
 import { Account } from './account.entity';
 import { BalanceChangeType } from '../interfaces/balance-change-type.enum';
 import { BSON } from 'mongodb';
+import { fakerEN as faker } from '@faker-js/faker';
 import { AccountDetail } from './account-details.entity';
-import { classToPlain, instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class AccountsService {
@@ -49,8 +49,7 @@ export class AccountsService {
       randomAccount.balance = 0;
     }
 
-    await this.accountsRepository.save(randomAccount);
-
+    // We calculate the state of the balance update, but will be populater later to prevent save it to the db 
     let state: BalanceChangeType;
     if (randomAccount.balance > oldBalance) {
       state = BalanceChangeType.INCREASED;
@@ -59,6 +58,26 @@ export class AccountsService {
     } else {
       state = BalanceChangeType.UNCHANGED;
     }
+
+    // Create a new movement detail each time a balance update is generated
+    const detail: AccountDetail = {
+      confirmed_date: new Date(),
+      order_id: faker.string.alphanumeric(6),
+      order_code: faker.string.alphanumeric(6),
+      transaction_type: state,
+      amount: change,
+      balance: randomAccount.balance // The new balance after the transaction.
+    };
+
+    if (randomAccount.details) {
+      randomAccount.details.unshift(detail);
+    } else {
+      randomAccount.details = [detail];
+    }
+
+    await this.accountsRepository.save(randomAccount);
+
+    // This is the previously-calculated state of the detail aka movement aka transaction
     randomAccount.state = state;
 
     console.debug(randomAccount);

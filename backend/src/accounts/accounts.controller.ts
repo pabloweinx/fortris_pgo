@@ -24,7 +24,7 @@ export class AccountsController {
   }
 
   @Post()
-  async createAccountWithDetails(@Body() accountData: any): Promise<Account> {
+  async createAccountWithDetails(@Body() accountData: Account): Promise<Account> {
     return await this.accountsService.save(accountData);
   }
 

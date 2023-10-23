@@ -2,6 +2,7 @@ import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, WebSocketGatew
 import { Server, Socket } from 'socket.io';
 import { ExchangeRateService } from '../exchange-rate/exchange-rate.service';
 import { AccountsService } from 'src/accounts/accounts.service';
+import { Account } from 'src/accounts/account.entity';
 
 @WebSocketGateway({ cors: true })
 export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect, OnGatewayConnection {
@@ -27,7 +28,6 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect, OnG
   }
 
   sendExchangeRatePeriodically() {
-    console.log('sendExchangeRatePeriodically');
     this.exchangeRateInterval = setInterval(() => {
       const newExchangeRate = this.exchangeRateService.calculateNewExchangeRate();
       this.server.emit('newExchangeRate', newExchangeRate);
@@ -46,18 +46,17 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect, OnG
     }, Math.floor(Math.random() * (40000 - 20000 + 1) + 20000)); // Random interval between 20 and 40 seconds
   }
 
-  sendAccountBalanceUpdate(updatedAccount: any): void {
+  sendAccountBalanceUpdate(updatedAccount: Account): void {
     this.clients.forEach(client => client.emit('accountBalanceUpdate', updatedAccount));
   }
 
   handleDisconnect(client: Socket) {
-    // @TODO: temporary not disconnecting to prevent restarting nest everytime
-    /* this.clients = this.clients.filter(c => c.id !== client.id);
+    this.clients = this.clients.filter(c => c.id !== client.id);
 
     if (this.clients.length === 0) {
       clearInterval(this.exchangeRateInterval);
       clearInterval(this.accountUpdateInterval);
-    } */
+    }
   }
 
 }

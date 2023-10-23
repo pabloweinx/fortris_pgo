@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { Router } from '@angular/router';
-import { Observable, filter, map, switchMap, tap } from 'rxjs';
+import { Observable, combineLatest, debounceTime, filter, map, merge, shareReplay, startWith, switchMap, tap, withLatestFrom } from 'rxjs';
 import { Account } from 'src/app/interfaces/account.interface';
 import { AccountService } from 'src/app/services/account.service';
 import { ApiService } from 'src/app/services/api.service';
@@ -13,11 +13,12 @@ import { ReactiveService } from 'src/app/services/reactive.service';
   templateUrl: './accounts-list-page.component.html',
   styleUrls: ['./accounts-list-page.component.scss']
 })
-export class AccountsListPageComponent implements OnInit, OnDestroy {
+export class AccountsListPageComponent implements OnInit {
 
   accounts$: Observable<Account[]> = this.accountService.accounts$;
   exchangeRateUpdate$: Observable<number> = this.exchangeRateService.exchangeRateUpdate$;
   displayedColumns: string[] = ['account_name', 'category', 'tags', 'balance', 'available_balance'];
+  isAnimating!: boolean;
 
   constructor(
     private apiService: ApiService,
@@ -29,15 +30,47 @@ export class AccountsListPageComponent implements OnInit, OnDestroy {
 
   }
   ngOnInit(): void {
-    this.reactiveService.initReactivity();
-
     // We'll store the db accounts to work with them when receiving socket updates
     this.setInitialData();
 
-    // Preventing this observable to participate in the combineLatest op till it has a valid value (e. g, the one obtained in the setInitialData())
-    this.exchangeRateService.exchangeRateUpdate$.pipe(
-      filter(rate => rate !== 0)
-    )
+    // Observable for initial accounts.
+    const initialAccounts$ = this.accountService.accounts$.pipe(
+      withLatestFrom(this.exchangeRateService.exchangeRateUpdate$),
+      map(([accountsData, exchangeRateUpdate]) => {
+        return accountsData.map((account: Account) => {
+          const updatedBalance = account.balance * exchangeRateUpdate;
+          return { ...account, balance: updatedBalance };
+        });
+      }),
+    );
+
+    const accountUpdates$ = this.accountService.accountBalanceUpdate$.pipe(
+      withLatestFrom(this.accountService.accounts$, this.exchangeRateService.exchangeRateUpdate$),
+      map(([accountBalanceUpdate, accountsData, exchangeRateUpdate]) => {
+        return accountsData.map((account: Account) => {
+          if (accountBalanceUpdate && accountBalanceUpdate._id === account._id) {
+            return this.accountService.transformAccount({ ...account, ...accountBalanceUpdate }, exchangeRateUpdate);
+          }
+          return account;
+        });
+      }),
+    );
+
+    // exchange rate update
+    const exchangeRateUpdates$ = this.exchangeRateService.exchangeRateUpdate$.pipe(
+      withLatestFrom(this.accountService.accounts$),
+      map(([exchangeRateUpdate, accountsData]) => {
+        return accountsData.map((account: Account) => {
+          const updatedBalance = account.balance * exchangeRateUpdate;
+          return { ...account, balance: updatedBalance };
+        });
+      }),
+    );
+
+    // Fuse the initial accounts with updates
+    this.accounts$ = merge(initialAccounts$, accountUpdates$, exchangeRateUpdates$).pipe(
+      shareReplay(1)
+    );
   }
 
   /**
@@ -50,27 +83,22 @@ export class AccountsListPageComponent implements OnInit, OnDestroy {
       tap(rate => this.exchangeRateService.setInitialExchangeRate(rate)),
       switchMap(
         rate => this.apiService.getAccounts().pipe(
-          map((accounts: any) =>
+          map((accounts: Account[]) =>
             accounts.map((account: Account) => this.accountService.transformAccount(account, rate)
             )
           )
         )
       )
     ).subscribe(accounts => {
-      this.accountService.setInitialAccounts(accounts);
+      this.accountService.updateAccounts(accounts);
     });
   }
 
-  onAnimationEnd(event: AnimationEvent, account: Account) {
-    this.accountService.resetStates();
+  onAnimationEnd() {
+    this.accountService.resetState();
   }
 
   navigateToAccountDetail(account: Account) {
     this.router.navigate(['accounts', account._id]);
-  }
-
-
-  ngOnDestroy(): void {
-    this.reactiveService.disconnect();
   }
 }

@@ -1,7 +1,6 @@
 import { BalanceChangeType } from "./balance-change-type.enum";
 
 export interface AccountDetails {
-    _id: string;
     confirmed_date: Date;
     order_id: string;
     order_code: string;

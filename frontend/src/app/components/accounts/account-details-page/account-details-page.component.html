@@ -13,15 +13,29 @@
       <h2 [ngClass]="{'flash-increase': account?.state === 1, 'flash-decrease': account?.state === 2}">
         {{ account.balance }} BTC (${{ account.balance_dollar | number:'1.2-2' }})
       </h2>
-      <p [ngClass]="{'flash-increase': account?.state === 1, 'flash-decrease': account?.state === 2}">
+      <p>
         Available balance:
-        {{ account.available_balance }} BTC (${{ account.available_balance_dollar  | number:'1.2-2' }})</p>
+        <span [ngClass]="{'flash-increase': account?.state === 1, 'flash-decrease': account?.state === 2}">
+          {{ account.available_balance }} BTC (${{ account.available_balance_dollar  | number:'1.2-2' }})
+        </span>
+      </p>
     </mat-card-content>
   </mat-card>
 
-  <ng-template *ngIf="account?.details">
-    Tengo detalles!
+  <div *ngIf="account?.details">
     <mat-table [dataSource]="account.details">
+
+      <!-- Confirmed date -->
+      <ng-container matColumnDef="confirmed_date">
+        <mat-header-cell *matHeaderCellDef> Confirmed date </mat-header-cell>
+        <mat-cell *matCellDef="let detail"> {{ detail.confirmed_date }} </mat-cell>
+      </ng-container>
+
+      <!-- Order ID -->
+      <ng-container matColumnDef="order_id">
+        <mat-header-cell *matHeaderCellDef> Order ID </mat-header-cell>
+        <mat-cell *matCellDef="let detail"> {{ detail.order_id }} </mat-cell>
+      </ng-container>
 
       <!-- Order Code Column -->
       <ng-container matColumnDef="order_code">
@@ -35,10 +49,26 @@
         <mat-cell *matCellDef="let detail"> {{ getTransactionType(detail.transaction_type) }} </mat-cell>
       </ng-container>
 
-      <!-- Amount Column -->
-      <ng-container matColumnDef="amount">
-        <mat-header-cell *matHeaderCellDef> Amount </mat-header-cell>
-        <mat-cell *matCellDef="let detail"> {{ detail.amount }} BTC </mat-cell>
+      <!-- Amount is on Debit column if transaction is sent -->
+      <ng-container matColumnDef="debit">
+        <mat-header-cell *matHeaderCellDef> Debit </mat-header-cell>
+        <mat-cell *matCellDef="let detail">
+          <p *ngIf="detail?.transaction_type === 2">
+            {{ detail.amount }} BTC <br>
+            ${{ detail.amount }}
+          </p>
+        </mat-cell>
+      </ng-container>
+
+      <!-- Amount is on Credit column if transaction is received -->
+      <ng-container matColumnDef="credit">
+        <mat-header-cell *matHeaderCellDef> Credit </mat-header-cell>
+        <mat-cell *matCellDef="let detail">
+          <p *ngIf="detail?.transaction_type === 1">
+            {{ detail.amount }} BTC <br>
+            ${{ detail.amount }}
+          </p>
+        </mat-cell>
       </ng-container>
 
       <!-- Balance Column -->
@@ -48,14 +78,8 @@
       </ng-container>
 
       <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;" (animationend)="onAnimationEnd()"></mat-row>
 
     </mat-table>
-  </ng-template>
-    <div>Account name: {{ account.account_name }}</div>
-        <ul>
-          <li *ngFor="let details of account.details">
-              {{ details | json }}
-          </li>
-        </ul>
+  </div>
 </div>

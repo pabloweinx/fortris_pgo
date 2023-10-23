@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Route } from '@angular/router';
-import { Observable, iif, map, shareReplay, switchMap, tap } from 'rxjs';
+import { Observable, filter, iif, map, merge, shareReplay, switchMap, tap, withLatestFrom } from 'rxjs';
 import { Account } from 'src/app/interfaces/account.interface';
 import { AccountService } from 'src/app/services/account.service';
 import { ApiService } from 'src/app/services/api.service';
@@ -16,7 +16,7 @@ export class AccountDetailsPageComponent implements OnInit {
 
   selectedAccount$: Observable<Account | null> = this.accountService.selectedAccount$;
   exchangeRateUpdate$ = this.exchangeRateService.exchangeRateUpdate$;
-  displayedColumns: string[] = ['confirmed_date', 'order_id', 'order_code', 'transaction_type', 'amount', 'balance'];
+  displayedColumns: string[] = ['confirmed_date', 'order_id', 'order_code', 'transaction_type', 'debit', 'credit', 'balance'];
 
   constructor(
     private accountService: AccountService,
@@ -27,32 +27,44 @@ export class AccountDetailsPageComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.reactiveService.initReactivity();
-
     const accountId = this.route.snapshot.paramMap.get('id');
-  
+
     if (accountId) {
-      iif(
-        () => !this.exchangeRateService.getCurrentRateValue() || this.exchangeRateService.getCurrentRateValue() === 0, 
-        this.apiService.getExchangeRate().pipe(
-          tap(rate => this.exchangeRateService.setInitialExchangeRate(rate))
-        ),
-        this.exchangeRateService.exchangeRateUpdate$
-      ).pipe(
-        switchMap(
-          rate => {
-            return this.accountService.getAccountDetail(accountId).pipe(
-              map(account => this.accountService.transformAccount(account, rate))
-            )
-        }),
-        shareReplay(1)
-      ).subscribe(account => {
-        this.accountService.setSelectedAccount(account);
-      });
+      this.accountService.getAccountDetail(accountId).subscribe();
+      this.selectedAccount$ = this.mergeSelectedAccountObservables(accountId);
     }
   }
 
-  // Función para traducir el tipo de transacción.
+  private mergeSelectedAccountObservables(accountId: string): Observable<Account | null> {
+    return merge(
+      this.accountService.selectedAccount$.pipe(
+        filter(account => account !== null && account._id === accountId)
+      ),
+      this.accountService.accountBalanceUpdate$.pipe(
+        filter(update => update !== null && update._id === accountId),
+        map(update => {
+          const currentAccount = this.accountService.getCurrentSelectedAccount();
+          return currentAccount ? ({ ...currentAccount, ...update }) : update;
+        })
+      ),
+      this.exchangeRateService.exchangeRateUpdate$.pipe(
+        withLatestFrom(this.accountService.selectedAccount$),
+        map(([rate, account]) => {
+          if (account && account._id === accountId) {
+            return this.accountService.transformAccount(account, rate);
+          }
+          return account;
+        }),
+        filter(account => account !== null)
+      )
+    );
+  }
+
+  onAnimationEnd() {
+    this.accountService.resetState();
+  }
+
+  // Function to translate the type of transaction.
   getTransactionType(type: number): string {
     switch (type) {
       case 1: return 'Payment received';

@@ -1,20 +1,29 @@
-// These animations apply on the account rows background
+// These animations apply on the color of balance and available_balance text
 @keyframes flashGreen {
-    0%   { color: transparent; }
-    50%  { color: #aaffaa; }
-    100% { color: transparent; }
-  }
-  
-  @keyframes flashRed {
-    0%   { color: transparent; }
-    50%  { color: #ffaaaa; }
-    100% { color: transparent; }
+  0%, 100% {
+    color: black;
   }
 
-  .flash-increase {
-    animation: flashGreen 2s;
+  50% {
+    color: #6aff00;
   }
-  
-  .flash-decrease {
-    animation: flashRed 2s;
+}
+
+@keyframes flashRed {
+
+  0%, 100% {
+    color: black;
   }
+
+  50% {
+    color: #FF0000;
+  }
+}
+
+.flash-increase {
+  animation: flashGreen 2s;
+}
+
+.flash-decrease {
+  animation: flashRed 2s;
+}

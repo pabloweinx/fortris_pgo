@@ -28,7 +28,6 @@
     "@nestjs/websockets": "^10.2.7",
     "class-transformer": "^0.5.1",
     "cors": "^2.8.5",
-    "faker": "^6.6.6",
     "lodash": "^4.17.21",
     "mongodb": "^5.9.1",
     "reflect-metadata": "^0.1.13",
@@ -37,6 +36,7 @@
     "typeorm": "^0.3.17"
   },
   "devDependencies": {
+    "@faker-js/faker": "^8.2.0",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",

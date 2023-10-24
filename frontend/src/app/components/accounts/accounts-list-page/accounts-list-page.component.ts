@@ -3,7 +3,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { Router } from '@angular/router';
 import { Observable, combineLatest, debounceTime, filter, map, merge, shareReplay, startWith, switchMap, tap, withLatestFrom } from 'rxjs';
 import { Account } from 'src/app/interfaces/account.interface';
-import { AccountService } from 'src/app/services/account.service';
+import { AccountsService } from 'src/app/services/accounts.service';
 import { ApiService } from 'src/app/services/api.service';
 import { ExchangeRateService } from 'src/app/services/exchange-rate.service';
 import { ReactiveService } from 'src/app/services/reactive.service';
@@ -15,14 +15,14 @@ import { ReactiveService } from 'src/app/services/reactive.service';
 })
 export class AccountsListPageComponent implements OnInit {
 
-  accounts$: Observable<Account[]> = this.accountService.accounts$;
+  accounts$: Observable<Account[]> = this.accountsService.accounts$;
   exchangeRateUpdate$: Observable<number> = this.exchangeRateService.exchangeRateUpdate$;
-  displayedColumns: string[] = ['account_name', 'category', 'tags', 'balance', 'available_balance'];
+  displayedColumns: string[] = ['account_name', 'category', 'tags', 'balance', 'available_balance', 'actions'];
   isAnimating!: boolean;
 
   constructor(
     private apiService: ApiService,
-    private accountService: AccountService,
+    private accountsService: AccountsService,
     private exchangeRateService: ExchangeRateService,
     private reactiveService: ReactiveService,
     private router: Router
@@ -34,7 +34,7 @@ export class AccountsListPageComponent implements OnInit {
     this.setInitialData();
 
     // Observable for initial accounts.
-    const initialAccounts$ = this.accountService.accounts$.pipe(
+    const initialAccounts$ = this.accountsService.accounts$.pipe(
       withLatestFrom(this.exchangeRateService.exchangeRateUpdate$),
       map(([accountsData, exchangeRateUpdate]) => {
         return accountsData.map((account: Account) => {
@@ -44,12 +44,12 @@ export class AccountsListPageComponent implements OnInit {
       }),
     );
 
-    const accountUpdates$ = this.accountService.accountBalanceUpdate$.pipe(
-      withLatestFrom(this.accountService.accounts$, this.exchangeRateService.exchangeRateUpdate$),
+    const accountUpdates$ = this.accountsService.accountBalanceUpdate$.pipe(
+      withLatestFrom(this.accountsService.accounts$, this.exchangeRateService.exchangeRateUpdate$),
       map(([accountBalanceUpdate, accountsData, exchangeRateUpdate]) => {
         return accountsData.map((account: Account) => {
           if (accountBalanceUpdate && accountBalanceUpdate._id === account._id) {
-            return this.accountService.transformAccount({ ...account, ...accountBalanceUpdate }, exchangeRateUpdate);
+            return this.accountsService.transformAccount({ ...account, ...accountBalanceUpdate }, exchangeRateUpdate);
           }
           return account;
         });
@@ -58,7 +58,7 @@ export class AccountsListPageComponent implements OnInit {
 
     // exchange rate update
     const exchangeRateUpdates$ = this.exchangeRateService.exchangeRateUpdate$.pipe(
-      withLatestFrom(this.accountService.accounts$),
+      withLatestFrom(this.accountsService.accounts$),
       map(([exchangeRateUpdate, accountsData]) => {
         return accountsData.map((account: Account) => {
           const updatedBalance = account.balance * exchangeRateUpdate;
@@ -84,20 +84,28 @@ export class AccountsListPageComponent implements OnInit {
       switchMap(
         rate => this.apiService.getAccounts().pipe(
           map((accounts: Account[]) =>
-            accounts.map((account: Account) => this.accountService.transformAccount(account, rate)
+            accounts.map((account: Account) => this.accountsService.transformAccount(account, rate)
             )
           )
         )
       )
     ).subscribe(accounts => {
-      this.accountService.updateAccounts(accounts);
+      this.accountsService.updateAccounts(accounts);
     });
   }
 
+  /**
+ * This method calls the `resetState` method to remove the transient state
+ * that represents an account balance update
+ */
   onAnimationEnd() {
-    this.accountService.resetState();
+    this.accountsService.resetState();
   }
 
+/**
+ * This method navigates to the account detail page using the account _id
+ * @param {Account} account - The account 
+ */
   navigateToAccountDetail(account: Account) {
     this.router.navigate(['accounts', account._id]);
   }

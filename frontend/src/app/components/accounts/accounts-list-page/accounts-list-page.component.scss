@@ -28,9 +28,26 @@
 }
 
 .flash-increase {
-  animation: flashGreen 1s;
+  animation: flashGreen 2s;
 }
 
 .flash-decrease {
-  animation: flashRed 1s;
+  animation: flashRed 2s;
+}
+
+.toolbar-left {
+  order: 1;
+}
+
+.toolbar-center {
+  margin-right: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  order: 2;
+}
+
+.mat-row {
+  cursor: pointer;
 }

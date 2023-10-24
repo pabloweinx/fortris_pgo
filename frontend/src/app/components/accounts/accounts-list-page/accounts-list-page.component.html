@@ -2,9 +2,9 @@
 
   <!-- Top bar -->
   <mat-toolbar color="primary">
-    <span>📊 Accounts</span>
-    <span class="spacer"></span>
-    <span>${{ exchangeRateUpdate$ | async | number:'1.2-2'}}</span>
+    <div class="toolbar-left">📊 Accounts</div>
+    <div class="toolbar-center mat-subtitle-2">
+      <mat-icon>currency_bitcoin</mat-icon> : ${{ exchangeRateUpdate$ | async | number:'1.2-2'}}</div>
   </mat-toolbar>
 
   <!-- Table -->
@@ -36,14 +36,22 @@
     <ng-container matColumnDef="available_balance">
       <mat-header-cell *matHeaderCellDef> Available balance </mat-header-cell>
       <mat-cell *matCellDef="let account">
-        {{account.avaiable_balance}} BTC<br>${{account.available_balance_dollar | number:'1.2-2'}}
+        {{account.available_balance}} BTC<br>${{account.available_balance_dollar | number:'1.2-2'}}
+      </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+      <mat-cell *matCellDef="let row">
+        <button mat-button>
+          <mat-icon class="mat-icon-rtl-mirror">remove_red_eye</mat-icon>
+        </button>
       </mat-cell>
     </ng-container>
 
     <!-- Header and ranks of the table -->
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns;"
-      (click)="navigateToAccountDetail(row)"
+    <mat-row *matRowDef="let row; columns: displayedColumns;" (click)="navigateToAccountDetail(row)"
       [ngClass]="{'flash-increase': row.state === 1, 'flash-decrease': row.state === 2}"
       (animationend)="onAnimationEnd()">
     </mat-row>

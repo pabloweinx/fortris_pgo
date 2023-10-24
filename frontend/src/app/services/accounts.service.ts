@@ -6,7 +6,7 @@ import { ApiService } from './api.service';
 @Injectable({
   providedIn: 'root'
 })
-export class AccountService {
+export class AccountsService {
 
   private _accountsSubject = new BehaviorSubject<Account[]>([]);
   public accounts$ = this._accountsSubject.asObservable();
@@ -19,11 +19,19 @@ export class AccountService {
 
   constructor(private apiService: ApiService) { }
 
-  setSelectedAccount(account: Account): void {
+/**
+ * This method sets the selected account by emitting it as the next value in a subject.
+ * @param {Account} account - The account
+ */
+  setSelectedAccount(account: Account) {
     this._selectedAccountSubject.next(account);
   }
 
-  updateAccounts(newData: Account[]): void {
+  /**
+   * This method updates the accounts subject array with new data.
+   * @param {Account[]} newData - An array of Accounts 
+   */
+  updateAccounts(newData: Account[]) {
     this._accountsSubject.next(newData);
   }
 

@@ -16,7 +16,6 @@ export class AccountsService {
 
   async findAll(): Promise<any> {
     return this.accountsRepository.find({});
-    //return instanceToPlain(accounts);
   }
 
   async getAccountWithDetails(id: string): Promise<Account> {
@@ -79,8 +78,6 @@ export class AccountsService {
 
     // This is the previously-calculated state of the detail aka movement aka transaction
     randomAccount.state = state;
-
-    console.debug(randomAccount);
     return randomAccount;
   }
 

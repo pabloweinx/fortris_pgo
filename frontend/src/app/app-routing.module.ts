@@ -13,7 +13,7 @@ const routes: Routes = [
     loadChildren: () => import('./components/accounts/accounts.module').then(m => m.AccountsModule)
   },
   {
-    path: '**', // Esta es la ruta de comodín que captura cualquier URL no manejada
+    path: '**',
     redirectTo: 'accounts'
   }
 ];

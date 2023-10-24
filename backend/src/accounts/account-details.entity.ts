@@ -10,10 +10,10 @@ export class AccountDetail {
   @Column('timestamp')
   confirmed_date: Date;
 
-  @Column({ type: 'varchar'/* , length: 6, unique: true */ })
+  @Column({ type: 'varchar', length: 6, unique: true })
   order_id: string;
 
-  @Column({ length: 6/*,  unique: true */ })
+  @Column({ type: 'varchar', length: 6, unique: true })
   order_code: string;
 
   @Column('int')

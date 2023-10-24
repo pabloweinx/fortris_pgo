@@ -13,4 +13,13 @@ describe('ExchangeRateService', () => {
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
+
+  it('should set initial exchange rate correctly', () => {
+    const initialRate = 1.2;
+    service.setInitialExchangeRate(initialRate);
+
+    service.exchangeRateUpdate$.subscribe(rate => {
+      expect(rate).toEqual(initialRate);
+    });
+  });
 });

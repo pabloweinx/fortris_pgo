@@ -15,4 +15,10 @@ describe('ExchangeRateService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
+
+  it('should calculate an exchange rate within the expected range', () => {
+    const rate = service.calculateNewExchangeRate();
+    expect(rate).toBeGreaterThanOrEqual(5000);
+    expect(rate).toBeLessThanOrEqual(12000);
+  });
 });

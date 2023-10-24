@@ -1,12 +1,26 @@
-import { TestBed } from '@angular/core/testing';
-
+import { TestBed, async, fakeAsync, tick } from '@angular/core/testing';
 import { ReactiveService } from './reactive.service';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+class MockSocket {
+  on(eventName: string, callback: any) {
+    if (eventName === 'connect') {
+      callback();
+    }
+  }
+}
 
-describe('SocketService', () => {
+describe('ReactiveService', () => {
   let service: ReactiveService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [
+        ReactiveService,
+        { provide: MockSocket, useClass: MockSocket }
+      ]
+    });
+
     service = TestBed.inject(ReactiveService);
   });
 

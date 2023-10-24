@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Route } from '@angular/router';
-import { Observable, filter, iif, map, merge, shareReplay, switchMap, tap, withLatestFrom } from 'rxjs';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, filter, forkJoin, map, merge, switchMap, withLatestFrom } from 'rxjs';
 import { Account } from 'src/app/interfaces/account.interface';
-import { AccountService } from 'src/app/services/account.service';
+import { AccountsService } from 'src/app/services/accounts.service';
 import { ApiService } from 'src/app/services/api.service';
 import { ExchangeRateService } from 'src/app/services/exchange-rate.service';
 import { ReactiveService } from 'src/app/services/reactive.service';
@@ -14,15 +14,15 @@ import { ReactiveService } from 'src/app/services/reactive.service';
 })
 export class AccountDetailsPageComponent implements OnInit {
 
-  selectedAccount$: Observable<Account | null> = this.accountService.selectedAccount$;
-  exchangeRateUpdate$ = this.exchangeRateService.exchangeRateUpdate$;
+  selectedAccount$: Observable<Account | null> = this.accountsService.selectedAccount$;
   displayedColumns: string[] = ['confirmed_date', 'order_id', 'order_code', 'transaction_type', 'debit', 'credit', 'balance'];
 
   constructor(
-    private accountService: AccountService,
+    private accountsService: AccountsService,
     private apiService: ApiService,
     private exchangeRateService: ExchangeRateService,
     private reactiveService: ReactiveService,
+    private router: Router,
     private route: ActivatedRoute
   ) { }
 
@@ -30,28 +30,39 @@ export class AccountDetailsPageComponent implements OnInit {
     const accountId = this.route.snapshot.paramMap.get('id');
 
     if (accountId) {
-      this.accountService.getAccountDetail(accountId).subscribe();
+      this.accountsService.getAccountDetail(accountId).subscribe();
+
+      this.apiService.getExchangeRate().subscribe(rate => {
+        this.exchangeRateService.onExchangeRateUpdate(rate);
+      });
+
       this.selectedAccount$ = this.mergeSelectedAccountObservables(accountId);
     }
   }
 
-  private mergeSelectedAccountObservables(accountId: string): Observable<Account | null> {
+  /**
+   * This function merges multiple observables related to selected account for the detail page
+   * and returns an observable that emits the merged account data.
+   * @param {string} id - The account id 
+   * @returns an Observable of type `Account | null`.
+   */
+  private mergeSelectedAccountObservables(id: string): Observable<Account | null> {
     return merge(
-      this.accountService.selectedAccount$.pipe(
-        filter(account => account !== null && account._id === accountId)
+      this.accountsService.selectedAccount$.pipe(
+        filter(account => account !== null && account._id === id)
       ),
-      this.accountService.accountBalanceUpdate$.pipe(
-        filter(update => update !== null && update._id === accountId),
+      this.accountsService.accountBalanceUpdate$.pipe(
+        filter(update => update !== null && update._id === id),
         map(update => {
-          const currentAccount = this.accountService.getCurrentSelectedAccount();
+          const currentAccount = this.accountsService.getCurrentSelectedAccount();
           return currentAccount ? ({ ...currentAccount, ...update }) : update;
         })
       ),
       this.exchangeRateService.exchangeRateUpdate$.pipe(
-        withLatestFrom(this.accountService.selectedAccount$),
+        withLatestFrom(this.accountsService.selectedAccount$),
         map(([rate, account]) => {
-          if (account && account._id === accountId) {
-            return this.accountService.transformAccount(account, rate);
+          if (account && account._id === id) {
+            return this.accountsService.transformAccount(account, rate);
           }
           return account;
         }),
@@ -60,16 +71,27 @@ export class AccountDetailsPageComponent implements OnInit {
     );
   }
 
+  /**
+   * This method calls the `resetState` method to remove the transient state
+   * that represents an account balance update
+   */
   onAnimationEnd() {
-    this.accountService.resetState();
+    this.accountsService.resetState();
   }
 
-  // Function to translate the type of transaction.
+
+  /**
+   * This function translates the type of transaction to a human-readable text
+   */
   getTransactionType(type: number): string {
     switch (type) {
       case 1: return 'Payment received';
       case 2: return 'Payment sent';
       default: return 'Unknown';
     }
+  }
+
+  goBack() {
+    this.router.navigate(['/accounts']);
   }
 }

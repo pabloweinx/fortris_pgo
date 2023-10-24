@@ -5,7 +5,7 @@ export interface Account {
     _id: string,
     account_name: string;
     category: string;
-    tag: string;
+    tags: string;
     balance: number;
     available_balance: number;
     balance_dollar?: number;

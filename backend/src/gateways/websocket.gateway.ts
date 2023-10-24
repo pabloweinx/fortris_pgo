@@ -31,7 +31,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect, OnG
     this.exchangeRateInterval = setInterval(() => {
       const newExchangeRate = this.exchangeRateService.calculateNewExchangeRate();
       this.server.emit('newExchangeRate', newExchangeRate);
-    }, 30000); // @TODO: set as env global
+    }, 30000);
   }
 
   /**
